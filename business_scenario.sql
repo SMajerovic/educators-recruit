@@ -1,11 +1,11 @@
 -- Educators Recruit Business Scenario
 
 -- Drop table if exists for idempotency
-IF OBJECT_ID('dbo.Educators', 'U') IS NOT NULL
-    DROP TABLE dbo.Educators;
+IF OBJECT_ID('dbo.Educator', 'U') IS NOT NULL
+    DROP TABLE dbo.Educator;
 
 -- Create table to store educator information
-CREATE TABLE dbo.Educators (
+CREATE TABLE dbo.Educator (
     EducatorID INT IDENTITY(1,1) PRIMARY KEY,
     FirstName VARCHAR(50) NOT NULL,
     LastName VARCHAR(50) NOT NULL,
@@ -16,12 +16,14 @@ CREATE TABLE dbo.Educators (
     MediaSource VARCHAR(50) NOT NULL,
     DateContacted DATE NOT NULL,
     SchoolPlaced VARCHAR(100) NULL,
-    DateFoundJob DATE NULL
+    DateFoundJob DATE NULL,
+    CONSTRAINT CHK_Gender CHECK (Gender IN ('male', 'female')),
+    CONSTRAINT CHK_DateFoundJob CHECK (DateFoundJob IS NULL OR DateFoundJob >= DateContacted)
 );
 GO
 
 -- Insert sample data provided in the README
-INSERT INTO dbo.Educators
+INSERT INTO dbo.Educator
     (FirstName, LastName, DateOfBirth, Gender, CollegeAttended, DegreeTitle, MediaSource, DateContacted, SchoolPlaced, DateFoundJob)
 VALUES
     ('Mary', 'Lynn', '2000-09-13', 'female', 'Excelsior College', 'BA in Mathematics Education', 'magazine', '2022-05-02', 'Brooklyn High School', '2022-05-09'),
@@ -38,7 +40,7 @@ GO
 SELECT
     CollegeAttended,
     COUNT(*) AS PlacedUnderTwoWeeks
-FROM dbo.Educators
+FROM dbo.Educator
 WHERE SchoolPlaced IS NOT NULL
   AND DATEDIFF(day, DateContacted, DateFoundJob) <= 14
 GROUP BY CollegeAttended;
@@ -48,7 +50,7 @@ GO
 SELECT
     Gender,
     COUNT(*) AS SuccessfulPlacements
-FROM dbo.Educators
+FROM dbo.Educator
 WHERE SchoolPlaced IS NOT NULL
 GROUP BY Gender;
 GO
@@ -59,7 +61,7 @@ SELECT
     AVG(CAST(ContactCount AS FLOAT)) AS AvgContactsPerDay
 FROM (
     SELECT DateContacted, COUNT(*) AS ContactCount
-    FROM dbo.Educators
+    FROM dbo.Educator
     GROUP BY DateContacted
 ) AS DailyContacts;
 
@@ -67,7 +69,7 @@ FROM (
 SELECT
     MediaSource,
     COUNT(*) AS TotalContacts
-FROM dbo.Educators
+FROM dbo.Educator
 GROUP BY MediaSource;
 GO
 
@@ -76,7 +78,7 @@ SELECT
     AVG(CAST(PlacementCount AS FLOAT)) AS AvgPlacementsPerDay
 FROM (
     SELECT DateFoundJob, COUNT(*) AS PlacementCount
-    FROM dbo.Educators
+    FROM dbo.Educator
     WHERE DateFoundJob IS NOT NULL
     GROUP BY DateFoundJob
 ) AS DailyPlacements;
@@ -87,7 +89,7 @@ SELECT
     DateFoundJob,
     DegreeTitle,
     COUNT(*) AS Placements
-FROM dbo.Educators
+FROM dbo.Educator
 WHERE DateFoundJob IS NOT NULL
 GROUP BY DateFoundJob, DegreeTitle
 ORDER BY DateFoundJob, DegreeTitle;
@@ -99,5 +101,5 @@ SELECT
     LastName,
     DATEDIFF(year, DateOfBirth, GETDATE()) AS Age,
     DegreeTitle
-FROM dbo.Educators;
+FROM dbo.Educator;
 GO
